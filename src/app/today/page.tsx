@@ -53,9 +53,15 @@ export default async function TodayPage({ searchParams }: { searchParams: Promis
 
       <TodaysPlan platforms={planPlatforms} dailyTarget={settings.dailyTarget} />
 
-      <DailyTracker date={date} platforms={trackerPlatforms} initialCounts={initialCounts} dailyTarget={settings.dailyTarget} />
+      <DailyTracker
+        key={date}
+        date={date}
+        platforms={trackerPlatforms}
+        initialCounts={initialCounts}
+        dailyTarget={settings.dailyTarget}
+      />
 
-      <DayNote date={date} initialNote={dayNote?.note ?? ""} />
+      <DayNote key={date} date={date} initialNote={dayNote?.note ?? ""} />
     </div>
   );
 }

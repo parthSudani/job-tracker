@@ -37,15 +37,13 @@ export function DailyTracker({
   dailyTarget: number;
 }) {
   const router = useRouter();
+  // No effect needed to reset counts when `date`/`initialCounts` change —
+  // the Today page keys this component by date, so switching days is a
+  // fresh mount. A successful save updates `baseline` directly (below).
   const [baseline, setBaseline] = React.useState(initialCounts);
   const [counts, setCounts] = React.useState(initialCounts);
   const [pending, startTransition] = React.useTransition();
   const [resetOpen, setResetOpen] = React.useState(false);
-
-  React.useEffect(() => {
-    setBaseline(initialCounts);
-    setCounts(initialCounts);
-  }, [initialCounts]);
 
   const total = React.useMemo(() => Object.values(counts).reduce((a, b) => a + b, 0), [counts]);
   const dirty = React.useMemo(

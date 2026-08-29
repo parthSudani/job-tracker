@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { prisma } from "@/lib/db";
-import { keyToUtcDate } from "@/lib/date";
-import { createCompanyPlatform } from "@/lib/services/platforms";
+import { writeStore } from "@/lib/store";
+import { createCompanyPlatformInPlace } from "@/lib/services/platforms";
+import { upsertRecordInPlace } from "@/lib/services/records";
 
 export const dynamic = "force-dynamic";
 
@@ -20,7 +20,8 @@ const importPayloadSchema = z.array(importRowSchema).max(50000);
  * matched to an existing platform by case-insensitive name; unmatched names
  * are created as new "Company Site" entries so nothing is silently dropped.
  * Each (platform, date) pair upserts in place — re-importing the same file
- * is safe and never creates duplicate rows.
+ * is safe and never creates duplicate rows. The whole import is one read +
+ * one write against the store, not one round trip per row.
  */
 export async function POST(req: NextRequest) {
   let body: unknown;
@@ -39,41 +40,36 @@ export async function POST(req: NextRequest) {
   }
 
   const rows = parsed.data;
-  const platforms = await prisma.platform.findMany();
-  const byName = new Map(platforms.map((p) => [p.name.toLowerCase().trim(), p]));
 
-  let created = 0;
-  let updated = 0;
-  let platformsCreated = 0;
+  const result = await writeStore((data) => {
+    const byName = new Map(data.platforms.map((p) => [p.name.toLowerCase().trim(), p]));
+    let created = 0;
+    let updated = 0;
+    let platformsCreated = 0;
 
-  for (const row of rows) {
-    const key = row.platform.toLowerCase().trim();
-    let platform = byName.get(key);
-    if (!platform) {
-      platform = await createCompanyPlatform({ name: row.platform });
-      byName.set(key, platform);
-      platformsCreated++;
+    for (const row of rows) {
+      const key = row.platform.toLowerCase().trim();
+      let platform = byName.get(key);
+      if (!platform) {
+        platform = createCompanyPlatformInPlace(data, { name: row.platform });
+        byName.set(key, platform);
+        platformsCreated++;
+      }
+
+      const existed = data.records.some((r) => r.platformId === platform!.id && r.date === row.date);
+      upsertRecordInPlace(data, {
+        platformId: platform.id,
+        date: row.date,
+        applicationCount: row.applications,
+        notes: row.notes ?? undefined,
+      });
+
+      if (existed) updated++;
+      else created++;
     }
 
-    const date = keyToUtcDate(row.date);
-    const existing = await prisma.applicationRecord.findUnique({
-      where: { platformId_date: { platformId: platform.id, date } },
-    });
+    return { created, updated, platformsCreated, totalRows: rows.length };
+  });
 
-    await prisma.applicationRecord.upsert({
-      where: { platformId_date: { platformId: platform.id, date } },
-      update: { applicationCount: row.applications, notes: row.notes || undefined },
-      create: {
-        platformId: platform.id,
-        date,
-        applicationCount: row.applications,
-        notes: row.notes || null,
-      },
-    });
-
-    if (existing) updated++;
-    else created++;
-  }
-
-  return NextResponse.json({ ok: true, created, updated, platformsCreated, totalRows: rows.length });
+  return NextResponse.json({ ok: true, ...result });
 }

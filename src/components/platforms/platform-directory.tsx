@@ -133,6 +133,7 @@ export function PlatformDirectory({ platforms }: { platforms: PlatformCardData[]
       )}
 
       <QuickAddModal
+        key={quickAdd?.id ?? "closed"}
         open={!!quickAdd}
         onOpenChange={(open) => !open && setQuickAdd(null)}
         platform={quickAdd}

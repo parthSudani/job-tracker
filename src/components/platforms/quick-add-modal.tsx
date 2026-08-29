@@ -23,13 +23,12 @@ export function QuickAddModal({
   initialCount: number;
 }) {
   const router = useRouter();
+  // No effect needed to reset `count` when the target platform changes —
+  // the call site keys this component by platform id, so a different
+  // platform is a fresh mount with fresh state.
   const [count, setCount] = React.useState(initialCount);
   const [pending, startTransition] = React.useTransition();
   const today = todayKey();
-
-  React.useEffect(() => {
-    if (open) setCount(initialCount);
-  }, [open, initialCount]);
 
   function handleSave() {
     if (!platform) return;

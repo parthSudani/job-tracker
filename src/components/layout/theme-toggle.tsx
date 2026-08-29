@@ -14,6 +14,10 @@ const OPTIONS = [
 export function ThemeToggle({ className }: { className?: string }) {
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = React.useState(false);
+  // Standard next-themes hydration guard: the server can't know the client's
+  // stored theme preference, so the active button is only shown once we're
+  // past hydration — not a prop-driven reset, so a `key` remount doesn't apply.
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   React.useEffect(() => setMounted(true), []);
 
   return (

@@ -36,15 +36,13 @@ export function RecordEditDialog({
   onOpenChange: (open: boolean) => void;
 }) {
   const router = useRouter();
+  // No effect needed to reset count/notes when `record` changes — both call
+  // sites key this component by record id, so editing a different row is a
+  // fresh mount.
   const [count, setCount] = React.useState(record?.applicationCount ?? 0);
   const [notes, setNotes] = React.useState(record?.notes ?? "");
   const [pending, startTransition] = React.useTransition();
   const [confirmDelete, setConfirmDelete] = React.useState(false);
-
-  React.useEffect(() => {
-    setCount(record?.applicationCount ?? 0);
-    setNotes(record?.notes ?? "");
-  }, [record]);
 
   function handleSave() {
     if (!record) return;

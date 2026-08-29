@@ -9,10 +9,10 @@ import { saveDayNoteAction } from "@/actions/day-notes";
 import type { DateKey } from "@/lib/date";
 
 export function DayNote({ date, initialNote }: { date: DateKey; initialNote: string }) {
+  // No effect needed to reset `note` when the date changes — the Today page
+  // keys this component by date, so switching days is a fresh mount.
   const [note, setNote] = React.useState(initialNote);
   const [pending, startTransition] = React.useTransition();
-
-  React.useEffect(() => setNote(initialNote), [initialNote]);
 
   const dirty = note !== initialNote;
 

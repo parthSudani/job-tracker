@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/db";
-import { utcDateToKey, todayKey } from "@/lib/date";
+import { getAllRecordsWithPlatform } from "@/lib/services/records";
+import { todayKey } from "@/lib/date";
 
 export const dynamic = "force-dynamic";
 
@@ -11,13 +11,10 @@ function csvEscape(value: string): string {
 export async function GET(req: NextRequest) {
   const format = req.nextUrl.searchParams.get("format") === "json" ? "json" : "csv";
 
-  const records = await prisma.applicationRecord.findMany({
-    include: { platform: true },
-    orderBy: [{ date: "desc" }],
-  });
+  const records = await getAllRecordsWithPlatform();
 
   const rows = records.map((r) => ({
-    date: utcDateToKey(r.date),
+    date: r.date,
     platform: r.platform.name,
     applications: r.applicationCount,
     priority: r.platform.priority,

@@ -1,31 +1,31 @@
-import { prisma } from "@/lib/db";
-import { keyToUtcDate, utcDateToKey, type DateKey } from "@/lib/date";
+import { readStore, writeStore, newId, nowIso } from "@/lib/store";
+import type { DateKey } from "@/lib/date";
 
 export async function getDayNote(date: DateKey) {
-  return prisma.dayNote.findUnique({ where: { date: keyToUtcDate(date) } });
+  const { dayNotes } = await readStore();
+  return dayNotes.find((n) => n.date === date) ?? null;
 }
 
-export async function getDayNotesInRange(fromKey: DateKey, toKey: DateKey) {
-  return prisma.dayNote.findMany({
-    where: { date: { gte: keyToUtcDate(fromKey), lte: keyToUtcDate(toKey) } },
-  });
-}
-
-export async function getAllDayNotes() {
-  const rows = await prisma.dayNote.findMany();
-  return new Map(rows.map((r) => [utcDateToKey(r.date), r.note] as const));
+export async function getAllDayNotes(): Promise<Map<DateKey, string>> {
+  const { dayNotes } = await readStore();
+  return new Map(dayNotes.map((n) => [n.date, n.note] as const));
 }
 
 export async function upsertDayNote(date: DateKey, note: string) {
   const trimmed = note.trim();
-  const utcDate = keyToUtcDate(date);
-  if (!trimmed) {
-    await prisma.dayNote.deleteMany({ where: { date: utcDate } });
-    return null;
-  }
-  return prisma.dayNote.upsert({
-    where: { date: utcDate },
-    update: { note: trimmed },
-    create: { date: utcDate, note: trimmed },
+  return writeStore((data) => {
+    const existingIndex = data.dayNotes.findIndex((n) => n.date === date);
+    if (!trimmed) {
+      if (existingIndex !== -1) data.dayNotes.splice(existingIndex, 1);
+      return null;
+    }
+    if (existingIndex !== -1) {
+      data.dayNotes[existingIndex] = { ...data.dayNotes[existingIndex], note: trimmed, updatedAt: nowIso() };
+      return data.dayNotes[existingIndex];
+    }
+    const ts = nowIso();
+    const created = { id: newId(), date, note: trimmed, createdAt: ts, updatedAt: ts };
+    data.dayNotes.push(created);
+    return created;
   });
 }

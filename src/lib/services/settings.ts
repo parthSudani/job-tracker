@@ -1,26 +1,24 @@
-import { prisma } from "@/lib/db";
+import { readStore, writeStore, nowIso } from "@/lib/store";
 import type { SettingsFormInput } from "@/lib/validations";
 
 export async function getSettings() {
-  const settings = await prisma.settings.findUnique({ where: { id: 1 } });
-  if (settings) return settings;
-  return prisma.settings.create({ data: { id: 1 } });
+  const { settings } = await readStore();
+  return settings;
 }
 
 export async function updateSettings(input: Partial<SettingsFormInput>) {
-  await getSettings();
-  return prisma.settings.update({ where: { id: 1 }, data: input });
+  return writeStore((data) => {
+    data.settings = { ...data.settings, ...input, updatedAt: nowIso() };
+    return data.settings;
+  });
 }
 
 export async function resetAllData() {
-  await prisma.$transaction([
-    prisma.applicationRecord.deleteMany({}),
-    prisma.platform.deleteMany({ where: { isCustom: true } }),
-    prisma.platform.updateMany({ data: { active: true } }),
-    prisma.settings.upsert({
-      where: { id: 1 },
-      update: { dailyTarget: 50, monthlyTarget: 1000 },
-      create: { id: 1 },
-    }),
-  ]);
+  await writeStore((data) => {
+    data.records = [];
+    data.dayNotes = [];
+    data.platforms = data.platforms.filter((p) => !p.isCustom);
+    for (const p of data.platforms) p.active = true;
+    data.settings = { ...data.settings, dailyTarget: 50, monthlyTarget: 1000, updatedAt: nowIso() };
+  });
 }

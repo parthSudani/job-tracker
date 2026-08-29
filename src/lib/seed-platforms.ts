@@ -1,6 +1,5 @@
-import { PrismaClient } from "@prisma/client";
-
-const prisma = new PrismaClient();
+// Static seed data for the 31 job platforms. Pure data, no I/O — consumed by
+// lib/store.ts to initialize a brand-new store on first access.
 
 const CATEGORY = {
   PRIMARY: "Primary",
@@ -18,7 +17,7 @@ const FREQ = {
   ASNEEDED: "As needed",
 } as const;
 
-type Seed = {
+export type SeedPlatform = {
   name: string;
   slug: string;
   officialUrl: string | null;
@@ -34,7 +33,7 @@ type Seed = {
 // Priority was scored by weighing relevance to software/Node.js/full-stack
 // engineers, remote + India + international reach, listing quality vs. spam
 // risk, and recruiter responsiveness — not by raw application volume.
-const PLATFORMS: Seed[] = [
+export const SEED_PLATFORMS: SeedPlatform[] = [
   {
     name: "LinkedIn",
     slug: "linkedin",
@@ -408,58 +407,3 @@ const PLATFORMS: Seed[] = [
     priorityReason: "Aggregation causes duplicate and stale listings; best used as a light supplementary sweep.",
   },
 ];
-
-async function main() {
-  console.log(`Seeding ${PLATFORMS.length} platforms...`);
-
-  for (let i = 0; i < PLATFORMS.length; i++) {
-    const p = PLATFORMS[i];
-    await prisma.platform.upsert({
-      where: { slug: p.slug },
-      update: {
-        name: p.name,
-        officialUrl: p.officialUrl,
-        category: p.category,
-        description: p.description,
-        whyUseIt: p.whyUseIt,
-        recommendedFor: p.recommendedFor,
-        recommendedFrequency: p.recommendedFrequency,
-        priority: p.priority,
-        priorityReason: p.priorityReason,
-        sortOrder: i,
-      },
-      create: {
-        name: p.name,
-        slug: p.slug,
-        officialUrl: p.officialUrl,
-        category: p.category,
-        description: p.description,
-        whyUseIt: p.whyUseIt,
-        recommendedFor: p.recommendedFor,
-        recommendedFrequency: p.recommendedFrequency,
-        priority: p.priority,
-        priorityReason: p.priorityReason,
-        active: true,
-        isCustom: false,
-        sortOrder: i,
-      },
-    });
-  }
-
-  await prisma.settings.upsert({
-    where: { id: 1 },
-    update: {},
-    create: { id: 1 },
-  });
-
-  console.log("Seed complete. Application data starts at zero — no fake records were created.");
-}
-
-main()
-  .catch((e) => {
-    console.error(e);
-    process.exit(1);
-  })
-  .finally(async () => {
-    await prisma.$disconnect();
-  });

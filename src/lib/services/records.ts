@@ -1,100 +1,99 @@
-import { prisma } from "@/lib/db";
-import { keyToUtcDate, utcDateToKey, type DateKey } from "@/lib/date";
+import { readStore, writeStore, newId, nowIso, type RecordRow, type StoreData } from "@/lib/store";
+import { keyToUtcDate, type DateKey } from "@/lib/date";
 import type { UpsertRecordInput, BulkUpsertInput } from "@/lib/validations";
 
-export async function upsertRecord(input: UpsertRecordInput) {
-  const date = keyToUtcDate(input.date);
-  return prisma.applicationRecord.upsert({
-    where: { platformId_date: { platformId: input.platformId, date } },
-    update: { applicationCount: input.applicationCount, notes: input.notes ?? undefined },
-    create: {
+function withDate<T extends RecordRow>(row: T) {
+  return { ...row, date: keyToUtcDate(row.date) };
+}
+
+/** Pure in-place upsert, reused by upsertRecord, bulkUpsertForDate, and the import route. */
+export function upsertRecordInPlace(
+  data: StoreData,
+  input: { platformId: string; date: DateKey; applicationCount: number; notes?: string | null }
+): RecordRow {
+  const ts = nowIso();
+  let record = data.records.find((r) => r.platformId === input.platformId && r.date === input.date);
+  if (record) {
+    record.applicationCount = input.applicationCount;
+    if (input.notes !== undefined) record.notes = input.notes ?? null;
+    record.updatedAt = ts;
+  } else {
+    record = {
+      id: newId(),
       platformId: input.platformId,
-      date,
+      date: input.date,
       applicationCount: input.applicationCount,
       notes: input.notes ?? null,
-    },
-  });
+      createdAt: ts,
+      updatedAt: ts,
+    };
+    data.records.push(record);
+  }
+  return record;
+}
+
+export async function upsertRecord(input: UpsertRecordInput) {
+  const result = await writeStore((data) => upsertRecordInPlace(data, input));
+  return withDate(result);
 }
 
 /**
- * Saves a full day's tallies in one transaction. A platform is only written
- * when it already has a record for that day (so an explicit reset to 0 is
+ * Saves a full day's tallies in one write. A platform is only written when
+ * it already has a record for that day (so an explicit reset to 0 is
  * respected) or the new count is > 0 — untouched platforms never create
  * empty rows.
  */
 export async function bulkUpsertForDate(input: BulkUpsertInput) {
-  const date = keyToUtcDate(input.date);
-  const platformIds = input.entries.map((e) => e.platformId);
-  const existing = await prisma.applicationRecord.findMany({
-    where: { date, platformId: { in: platformIds } },
-    select: { platformId: true },
+  return writeStore((data) => {
+    let count = 0;
+    for (const e of input.entries) {
+      const existing = data.records.find((r) => r.platformId === e.platformId && r.date === input.date);
+      if (!existing && e.applicationCount <= 0) continue;
+      upsertRecordInPlace(data, { platformId: e.platformId, date: input.date, applicationCount: e.applicationCount });
+      count++;
+    }
+    return count;
   });
-  const existingIds = new Set(existing.map((r) => r.platformId));
-
-  const toWrite = input.entries.filter((e) => e.applicationCount > 0 || existingIds.has(e.platformId));
-
-  await prisma.$transaction(
-    toWrite.map((e) =>
-      prisma.applicationRecord.upsert({
-        where: { platformId_date: { platformId: e.platformId, date } },
-        update: { applicationCount: e.applicationCount },
-        create: { platformId: e.platformId, date, applicationCount: e.applicationCount },
-      })
-    )
-  );
-
-  return toWrite.length;
 }
 
 export async function getRecordsForDate(dateKeyStr: DateKey) {
-  return prisma.applicationRecord.findMany({
-    where: { date: keyToUtcDate(dateKeyStr) },
-    include: { platform: true },
-  });
+  const { records, platforms } = await readStore();
+  const byId = new Map(platforms.map((p) => [p.id, p]));
+  return records
+    .filter((r) => r.date === dateKeyStr)
+    .map((r) => ({ ...withDate(r), platform: byId.get(r.platformId)! }));
 }
 
 export async function getRecordsForPlatform(platformId: string, opts: { fromKey?: DateKey; toKey?: DateKey } = {}) {
-  return prisma.applicationRecord.findMany({
-    where: {
-      platformId,
-      date: {
-        ...(opts.fromKey ? { gte: keyToUtcDate(opts.fromKey) } : {}),
-        ...(opts.toKey ? { lte: keyToUtcDate(opts.toKey) } : {}),
-      },
-    },
-    orderBy: { date: "desc" },
-  });
-}
-
-export async function getRecordsInRange(fromKey: DateKey, toKey: DateKey) {
-  return prisma.applicationRecord.findMany({
-    where: { date: { gte: keyToUtcDate(fromKey), lte: keyToUtcDate(toKey) } },
-    include: { platform: true },
-    orderBy: { date: "desc" },
-  });
+  const { records } = await readStore();
+  return records
+    .filter(
+      (r) =>
+        r.platformId === platformId &&
+        (!opts.fromKey || r.date >= opts.fromKey) &&
+        (!opts.toKey || r.date <= opts.toKey)
+    )
+    .sort((a, b) => (a.date < b.date ? 1 : -1))
+    .map(withDate);
 }
 
 export async function deleteRecord(id: string) {
-  return prisma.applicationRecord.delete({ where: { id } });
+  await writeStore((data) => {
+    data.records = data.records.filter((r) => r.id !== id);
+  });
 }
 
 /** Lightweight fetch of every record for in-memory aggregation (see lib/analytics.ts). */
 export async function getAllRecordsLight() {
-  const rows = await prisma.applicationRecord.findMany({
-    select: { platformId: true, date: true, applicationCount: true },
-  });
-  return rows.map((r) => ({ platformId: r.platformId, date: utcDateToKey(r.date), applicationCount: r.applicationCount }));
+  const { records } = await readStore();
+  return records.map((r) => ({ platformId: r.platformId, date: r.date, applicationCount: r.applicationCount }));
 }
 
 /** Full record set with platform details, for History/Calendar pages (personal-scale — safe to fetch in full). */
 export async function getAllRecordsWithPlatform() {
-  const rows = await prisma.applicationRecord.findMany({
-    include: { platform: true },
-    orderBy: { date: "desc" },
-  });
-  return rows.map((r) => ({ ...r, date: utcDateToKey(r.date) }));
-}
-
-export function toRecordDTO<T extends { date: Date }>(record: T) {
-  return { ...record, date: utcDateToKey(record.date) };
+  const { records, platforms } = await readStore();
+  const byId = new Map(platforms.map((p) => [p.id, p]));
+  return [...records]
+    .sort((a, b) => (a.date < b.date ? 1 : -1))
+    .map((r) => ({ ...r, platform: byId.get(r.platformId)! }));
 }

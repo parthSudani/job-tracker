@@ -4,15 +4,7 @@ import * as React from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import {
-  addDaysToKey,
-  addMonthsToKey,
-  formatDisplay,
-  isToday,
-  startOfMonthKey,
-  todayKey,
-  type DateKey,
-} from "@/lib/date";
+import { addMonthsToKey, formatDisplay, isToday, startOfMonthKey, todayKey, type DateKey } from "@/lib/date";
 import { cn, formatNumber } from "@/lib/utils";
 
 type DayBreakdown = { total: number; entries: { platformName: string; count: number }[] };

@@ -140,7 +140,7 @@ export function HistoryView({
         </div>
       )}
 
-      <RecordEditDialog record={editing} onOpenChange={(open) => !open && setEditing(null)} />
+      <RecordEditDialog key={editing?.id ?? "closed"} record={editing} onOpenChange={(open) => !open && setEditing(null)} />
     </div>
   );
 }
