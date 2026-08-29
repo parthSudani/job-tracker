@@ -54,14 +54,14 @@ export default async function TodayPage({ searchParams }: { searchParams: Promis
       <TodaysPlan platforms={planPlatforms} dailyTarget={settings.dailyTarget} />
 
       <DailyTracker
-        key={date}
+        key={`tracker-${date}`}
         date={date}
         platforms={trackerPlatforms}
         initialCounts={initialCounts}
         dailyTarget={settings.dailyTarget}
       />
 
-      <DayNote key={date} date={date} initialNote={dayNote?.note ?? ""} />
+      <DayNote key={`note-${date}`} date={date} initialNote={dayNote?.note ?? ""} />
     </div>
   );
 }
