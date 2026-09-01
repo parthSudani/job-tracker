@@ -1,10 +1,10 @@
 import Link from "next/link";
 import { Plus, CalendarCheck2, BarChart3, LayoutGrid } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { formatWithPattern, todayKey } from "@/lib/date";
+import { currentHour, formatWithPattern, todayKey } from "@/lib/date";
 
 function getGreeting(): string {
-  const hour = new Date().getHours();
+  const hour = currentHour();
   if (hour < 12) return "Good morning";
   if (hour < 18) return "Good afternoon";
   return "Good evening";

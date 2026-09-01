@@ -1,22 +1,43 @@
 // All calendar-day math happens in "key space" (yyyy-MM-dd strings) using
 // UTC getters/setters exclusively, so there is never ambiguity between the
 // browser's local date and the UTC-midnight Date stored in SQLite. `today()`
-// is the one place local time enters, since this is a self-hosted,
-// single-user app where the server clock is the user's own clock.
+// is the one place local time enters.
+//
+// This app is hosted on Vercel, so Server Components/Actions run with an
+// ambient clock in UTC — NOT the user's own clock, even though the browser
+// is in IST. Resolving "today" from the runtime's ambient local time (as
+// this used to) made the server and the client disagree on the calendar day
+// for the ~5.5h window after IST midnight while UTC is still on the
+// previous date, so a save made right after midnight landed on "tomorrow"
+// per the client but didn't show up in "today" totals computed server-side.
+// APP_TIMEZONE pins day-boundary resolution to the user's actual timezone
+// everywhere, regardless of which timezone the process happens to run in.
+const APP_TIMEZONE = "Asia/Kolkata";
 
 const MS_PER_DAY = 86_400_000;
 
 export type DateKey = string; // yyyy-MM-dd
 
 export function dateKey(d: Date): DateKey {
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-  return `${y}-${m}-${day}`;
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: APP_TIMEZONE,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(d);
+  const get = (type: string) => parts.find((p) => p.type === type)!.value;
+  return `${get("year")}-${get("month")}-${get("day")}`;
 }
 
 export function todayKey(): DateKey {
   return dateKey(new Date());
+}
+
+/** Current hour (0-23) in the app's timezone, for time-of-day greetings etc. */
+export function currentHour(): number {
+  return Number(
+    new Intl.DateTimeFormat("en-GB", { timeZone: APP_TIMEZONE, hour: "2-digit", hour12: false }).format(new Date())
+  );
 }
 
 /** yyyy-MM-dd -> the UTC-midnight Date persisted in the database. */

@@ -1,19 +1,23 @@
 import { randomUUID } from "crypto";
 import { cache } from "react";
-import { get, put } from "@vercel/blob";
+import { get, put, BlobPreconditionFailedError } from "@vercel/blob";
 import { SEED_PLATFORMS } from "@/lib/seed-platforms";
 
 // Whole-app persistence: a single JSON document stored as one private Vercel
 // Blob file. Every service function reads/writes through this module — no
 // other file talks to @vercel/blob directly. This is intentionally simple
 // (no schema, no transactions, no migrations) for a personal, low-traffic,
-// single-user tool. Two real limitations worth knowing:
-//  1. Concurrent writes race — the last write wins, there's no locking.
-//     Fine for one person acting sequentially; not safe for multiple
-//     simultaneous editors.
-//  2. Every write rewrites the entire document. Fine at personal scale
-//     (thousands of records), not something you'd want at real scale.
+// single-user tool. One real limitation worth knowing: every write rewrites
+// the entire document. Fine at personal scale (thousands of records), not
+// something you'd want at real scale.
+//
+// Concurrent writes (two tabs/devices editing close together) are handled
+// with optimistic concurrency: writeStore reads the blob's ETag, only
+// commits with `ifMatch` on that ETag, and retries the whole read-mutate-
+// write cycle if another writer raced in first — so the loser retries
+// against fresh data instead of silently clobbering the winner's change.
 const BLOB_PATHNAME = "job-tracker-data.json";
+const MAX_WRITE_ATTEMPTS = 5;
 
 export type PlatformRow = {
   id: string;
@@ -133,15 +137,15 @@ function requireToken(): string {
   return token;
 }
 
-async function readBlobRaw(): Promise<StoreData | null> {
+async function readBlobRaw(): Promise<{ data: StoreData; etag: string } | null> {
   const token = requireToken();
   const result = await get(BLOB_PATHNAME, { access: "private", useCache: false, token });
   if (!result) return null;
   const text = await new Response(result.stream).text();
-  return JSON.parse(text) as StoreData;
+  return { data: JSON.parse(text) as StoreData, etag: result.blob.etag };
 }
 
-async function writeBlobRaw(data: StoreData): Promise<void> {
+async function writeBlobRaw(data: StoreData, ifMatch?: string): Promise<void> {
   const token = requireToken();
   await put(BLOB_PATHNAME, JSON.stringify(data), {
     access: "private",
@@ -149,12 +153,13 @@ async function writeBlobRaw(data: StoreData): Promise<void> {
     allowOverwrite: true,
     contentType: "application/json",
     token,
+    ifMatch,
   });
 }
 
 async function loadOrSeed(): Promise<StoreData> {
   const existing = await readBlobRaw();
-  if (existing) return existing;
+  if (existing) return existing.data;
   const seeded = createSeedData();
   await writeBlobRaw(seeded);
   return seeded;
@@ -168,10 +173,25 @@ async function loadOrSeed(): Promise<StoreData> {
  */
 export const readStore = cache(loadOrSeed);
 
-/** Fetches the freshest data, lets `mutator` edit it in place, persists it. */
+/**
+ * Fetches the freshest data, lets `mutator` edit it in place, persists it.
+ * Commits with `ifMatch` on the ETag it read, so a write from another tab
+ * or device that landed in between makes this one fail fast instead of
+ * silently overwriting it — the whole read-mutate-write cycle then retries
+ * against the newer data (mutator must be safe to call more than once).
+ */
 export async function writeStore<T>(mutator: (data: StoreData) => T): Promise<T> {
-  const data = await loadOrSeed();
-  const result = mutator(data);
-  await writeBlobRaw(data);
-  return result;
+  for (let attempt = 1; attempt <= MAX_WRITE_ATTEMPTS; attempt++) {
+    const existing = await readBlobRaw();
+    const data = existing ? existing.data : createSeedData();
+    const result = mutator(data);
+    try {
+      await writeBlobRaw(data, existing?.etag);
+      return result;
+    } catch (err) {
+      const isConflict = err instanceof BlobPreconditionFailedError;
+      if (!isConflict || attempt === MAX_WRITE_ATTEMPTS) throw err;
+    }
+  }
+  throw new Error("Could not save — too many concurrent edits, please try again.");
 }
