@@ -17,7 +17,7 @@ import { SEED_PLATFORMS } from "@/lib/seed-platforms";
 // write cycle if another writer raced in first — so the loser retries
 // against fresh data instead of silently clobbering the winner's change.
 const BLOB_PATHNAME = "job-tracker-data.json";
-const MAX_WRITE_ATTEMPTS = 5;
+const MAX_WRITE_ATTEMPTS = 8;
 
 export type PlatformRow = {
   id: string;
@@ -173,12 +173,17 @@ async function loadOrSeed(): Promise<StoreData> {
  */
 export const readStore = cache(loadOrSeed);
 
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 /**
  * Fetches the freshest data, lets `mutator` edit it in place, persists it.
  * Commits with `ifMatch` on the ETag it read, so a write from another tab
  * or device that landed in between makes this one fail fast instead of
  * silently overwriting it — the whole read-mutate-write cycle then retries
- * against the newer data (mutator must be safe to call more than once).
+ * (with jittered backoff) against the newer data. `mutator` must be safe to
+ * call more than once.
  */
 export async function writeStore<T>(mutator: (data: StoreData) => T): Promise<T> {
   for (let attempt = 1; attempt <= MAX_WRITE_ATTEMPTS; attempt++) {
@@ -190,8 +195,16 @@ export async function writeStore<T>(mutator: (data: StoreData) => T): Promise<T>
       return result;
     } catch (err) {
       const isConflict = err instanceof BlobPreconditionFailedError;
-      if (!isConflict || attempt === MAX_WRITE_ATTEMPTS) throw err;
+      if (!isConflict) throw err;
+      if (attempt === MAX_WRITE_ATTEMPTS) {
+        throw new Error(
+          "Couldn't save — this data was being edited from another tab or device at the same time. Please refresh and try again."
+        );
+      }
+      // Jittered backoff so two writers retrying in lockstep don't keep
+      // colliding on every attempt.
+      await sleep(30 * attempt + Math.random() * 100);
     }
   }
-  throw new Error("Could not save — too many concurrent edits, please try again.");
+  throw new Error("Couldn't save — please refresh and try again.");
 }
