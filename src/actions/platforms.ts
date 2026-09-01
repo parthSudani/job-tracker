@@ -24,13 +24,22 @@ export async function addCompanyAction(input: unknown) {
   if (!parsed.success) {
     return { ok: false as const, error: parsed.error.issues[0]?.message ?? "Invalid input" };
   }
-  const platform = await platformsService.createCompanyPlatform(parsed.data);
+  let platform;
+  try {
+    platform = await platformsService.createCompanyPlatform(parsed.data);
+  } catch (e) {
+    return { ok: false as const, error: e instanceof Error ? e.message : "Could not add company — please try again." };
+  }
   revalidateAll();
   return { ok: true as const, platform };
 }
 
 export async function togglePlatformActiveAction(id: string, active: boolean) {
-  await platformsService.setPlatformActive(id, active);
+  try {
+    await platformsService.setPlatformActive(id, active);
+  } catch (e) {
+    return { ok: false as const, error: e instanceof Error ? e.message : "Could not update — please try again." };
+  }
   revalidateAll();
   return { ok: true as const };
 }
@@ -40,7 +49,11 @@ export async function updatePlatformAction(id: string, input: unknown) {
   if (!parsed.success) {
     return { ok: false as const, error: parsed.error.issues[0]?.message ?? "Invalid input" };
   }
-  await platformsService.updatePlatform(id, parsed.data);
+  try {
+    await platformsService.updatePlatform(id, parsed.data);
+  } catch (e) {
+    return { ok: false as const, error: e instanceof Error ? e.message : "Could not save — please try again." };
+  }
   revalidateAll();
   return { ok: true as const };
 }

@@ -9,13 +9,21 @@ export async function updateSettingsAction(input: unknown) {
   if (!parsed.success) {
     return { ok: false as const, error: parsed.error.issues[0]?.message ?? "Invalid input" };
   }
-  await settingsService.updateSettings(parsed.data);
+  try {
+    await settingsService.updateSettings(parsed.data);
+  } catch (e) {
+    return { ok: false as const, error: e instanceof Error ? e.message : "Could not save — please try again." };
+  }
   revalidatePath("/", "layout");
   return { ok: true as const };
 }
 
 export async function resetAllDataAction() {
-  await settingsService.resetAllData();
+  try {
+    await settingsService.resetAllData();
+  } catch (e) {
+    return { ok: false as const, error: e instanceof Error ? e.message : "Could not reset — please try again." };
+  }
   revalidatePath("/", "layout");
   return { ok: true as const };
 }

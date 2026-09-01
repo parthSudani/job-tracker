@@ -16,7 +16,11 @@ export async function upsertRecordAction(input: unknown) {
   if (!parsed.success) {
     return { ok: false as const, error: parsed.error.issues[0]?.message ?? "Invalid input" };
   }
-  await recordsService.upsertRecord(parsed.data);
+  try {
+    await recordsService.upsertRecord(parsed.data);
+  } catch (e) {
+    return { ok: false as const, error: e instanceof Error ? e.message : "Could not save — please try again." };
+  }
   revalidateAll();
   return { ok: true as const };
 }
@@ -26,13 +30,22 @@ export async function bulkSaveDayAction(input: unknown) {
   if (!parsed.success) {
     return { ok: false as const, error: parsed.error.issues[0]?.message ?? "Invalid input" };
   }
-  const savedCount = await recordsService.bulkUpsertForDate(parsed.data);
+  let savedCount: number;
+  try {
+    savedCount = await recordsService.bulkUpsertForDate(parsed.data);
+  } catch (e) {
+    return { ok: false as const, error: e instanceof Error ? e.message : "Could not save — please try again." };
+  }
   revalidateAll();
   return { ok: true as const, savedCount };
 }
 
 export async function deleteRecordAction(id: string) {
-  await recordsService.deleteRecord(id);
+  try {
+    await recordsService.deleteRecord(id);
+  } catch (e) {
+    return { ok: false as const, error: e instanceof Error ? e.message : "Could not delete — please try again." };
+  }
   revalidateAll();
   return { ok: true as const };
 }

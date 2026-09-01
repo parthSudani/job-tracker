@@ -66,10 +66,14 @@ export function RecordEditDialog({
   function handleDelete() {
     if (!record?.id) return;
     startTransition(async () => {
-      await deleteRecordAction(record.id!);
-      toast.success("Record deleted.");
-      onOpenChange(false);
-      router.refresh();
+      const res = await deleteRecordAction(record.id!);
+      if (res.ok) {
+        toast.success("Record deleted.");
+        onOpenChange(false);
+        router.refresh();
+      } else {
+        toast.error(res.error ?? "Could not delete — please try again.");
+      }
     });
   }
 

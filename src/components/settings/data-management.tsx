@@ -59,11 +59,15 @@ export function DataManagement() {
 
   function handleReset() {
     startResetTransition(async () => {
-      await resetAllDataAction();
-      toast.success("All data has been reset.");
-      setResetOpen(false);
-      setResetText("");
-      router.refresh();
+      const res = await resetAllDataAction();
+      if (res.ok) {
+        toast.success("All data has been reset.");
+        setResetOpen(false);
+        setResetText("");
+        router.refresh();
+      } else {
+        toast.error(res.error ?? "Could not reset — please try again.");
+      }
     });
   }
 
