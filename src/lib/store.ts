@@ -17,7 +17,11 @@ import { SEED_PLATFORMS } from "@/lib/seed-platforms";
 // write cycle if another writer raced in first — so the loser retries
 // against fresh data instead of silently clobbering the winner's change.
 const BLOB_PATHNAME = "job-tracker-data.json";
-const MAX_WRITE_ATTEMPTS = 8;
+// writeStore retries for up to this long (wall clock, exponential backoff)
+// before giving up — generous enough to absorb even a stuck/duplicated
+// competing writer, while staying safely under Vercel's default 10s
+// Serverless Function timeout on the Hobby tier.
+const MAX_WRITE_WAIT_MS = 7_000;
 
 export type PlatformRow = {
   id: string;
@@ -186,7 +190,10 @@ function sleep(ms: number): Promise<void> {
  * call more than once.
  */
 export async function writeStore<T>(mutator: (data: StoreData) => T): Promise<T> {
-  for (let attempt = 1; attempt <= MAX_WRITE_ATTEMPTS; attempt++) {
+  const deadline = Date.now() + MAX_WRITE_WAIT_MS;
+  let attempt = 0;
+  while (true) {
+    attempt++;
     const existing = await readBlobRaw();
     const data = existing ? existing.data : createSeedData();
     const result = mutator(data);
@@ -194,17 +201,18 @@ export async function writeStore<T>(mutator: (data: StoreData) => T): Promise<T>
       await writeBlobRaw(data, existing?.etag);
       return result;
     } catch (err) {
-      const isConflict = err instanceof BlobPreconditionFailedError;
-      if (!isConflict) throw err;
-      if (attempt === MAX_WRITE_ATTEMPTS) {
-        throw new Error(
-          "Couldn't save — this data was being edited from another tab or device at the same time. Please refresh and try again."
-        );
+      if (!(err instanceof BlobPreconditionFailedError) || Date.now() >= deadline) {
+        if (err instanceof BlobPreconditionFailedError) {
+          throw new Error(
+            "Couldn't save — this data kept being edited from another tab or device at the same time. Please refresh and try again."
+          );
+        }
+        throw err;
       }
-      // Jittered backoff so two writers retrying in lockstep don't keep
-      // colliding on every attempt.
-      await sleep(30 * attempt + Math.random() * 100);
+      // Exponential backoff with jitter, capped, so competing writers spread
+      // out instead of repeatedly landing on the same instant.
+      const backoff = Math.min(1000, 50 * 2 ** attempt);
+      await sleep(backoff * (0.5 + Math.random()));
     }
   }
-  throw new Error("Couldn't save — please refresh and try again.");
 }

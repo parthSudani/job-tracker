@@ -45,7 +45,7 @@ export function QuickAddModal({
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={(next) => !pending && onOpenChange(next)}>
       <DialogContent className="max-w-sm">
         <DialogHeader>
           <DialogTitle>Add Applications</DialogTitle>
