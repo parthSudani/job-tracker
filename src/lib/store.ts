@@ -17,11 +17,11 @@ import { SEED_PLATFORMS } from "@/lib/seed-platforms";
 // write cycle if another writer raced in first — so the loser retries
 // against fresh data instead of silently clobbering the winner's change.
 const BLOB_PATHNAME = "job-tracker-data.json";
-// writeStore retries for up to this long (wall clock, exponential backoff)
-// before giving up — generous enough to absorb even a stuck/duplicated
-// competing writer, while staying safely under Vercel's default 10s
-// Serverless Function timeout on the Hobby tier.
-const MAX_WRITE_WAIT_MS = 7_000;
+// writeStore retries with proper conflict detection for up to this long
+// (wall clock, exponential backoff) before falling back to an unconditional
+// write — long enough to resolve ordinary overlapping edits cleanly, short
+// enough that a save never feels stuck waiting on it.
+const MAX_WRITE_WAIT_MS = 3_000;
 
 export type PlatformRow = {
   id: string;
@@ -187,7 +187,20 @@ function sleep(ms: number): Promise<void> {
  * or device that landed in between makes this one fail fast instead of
  * silently overwriting it — the whole read-mutate-write cycle then retries
  * (with jittered backoff) against the newer data. `mutator` must be safe to
- * call more than once.
+ * call more than once (each retry re-reads the latest data first, so it's
+ * effectively replaying "apply this one change" on top of whatever the
+ * other writer just saved, not reverting it).
+ *
+ * This is a personal, single-user tool used from multiple devices — a save
+ * must never be rejected outright just because two devices happened to edit
+ * around the same moment. So after the timed retry window, this doesn't
+ * throw: it falls through to one last unconditional write of the mutator's
+ * result against the latest data, with no ifMatch guard. That trades the
+ * (vanishingly rare, sub-second, same-record) theoretical lost-update case
+ * for a save that always succeeds — the right call here, since the failure
+ * mode of "your save was silently rejected" is worse than "in an extreme
+ * edge case, the very last of several simultaneous edits to the exact same
+ * record wins."
  */
 export async function writeStore<T>(mutator: (data: StoreData) => T): Promise<T> {
   const deadline = Date.now() + MAX_WRITE_WAIT_MS;
@@ -197,18 +210,14 @@ export async function writeStore<T>(mutator: (data: StoreData) => T): Promise<T>
     const existing = await readBlobRaw();
     const data = existing ? existing.data : createSeedData();
     const result = mutator(data);
+    const pastDeadline = Date.now() >= deadline;
     try {
-      await writeBlobRaw(data, existing?.etag);
+      // Once we're past the deadline, commit unconditionally (no ifMatch)
+      // instead of giving up — see the doc comment above.
+      await writeBlobRaw(data, pastDeadline ? undefined : existing?.etag);
       return result;
     } catch (err) {
-      if (!(err instanceof BlobPreconditionFailedError) || Date.now() >= deadline) {
-        if (err instanceof BlobPreconditionFailedError) {
-          throw new Error(
-            "Couldn't save — this data kept being edited from another tab or device at the same time. Please refresh and try again."
-          );
-        }
-        throw err;
-      }
+      if (!(err instanceof BlobPreconditionFailedError) || pastDeadline) throw err;
       // Exponential backoff with jitter, capped, so competing writers spread
       // out instead of repeatedly landing on the same instant.
       const backoff = Math.min(1000, 50 * 2 ** attempt);
