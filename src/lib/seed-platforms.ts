@@ -239,6 +239,18 @@ export const SEED_PLATFORMS: SeedPlatform[] = [
     priorityReason: "Remote-only developer focus lines up closely with a Node.js/full-stack job search.",
   },
   {
+    name: "Uplers",
+    slug: "uplers",
+    officialUrl: "https://platform.uplers.com/talent/all-opportunities",
+    category: CATEGORY.STARTUP,
+    description: "Vetted talent marketplace matching Indian remote professionals — especially developers — with global companies.",
+    whyUseIt: "Purpose-built for placing India-based tech talent into full-time remote roles abroad, with a Toptal-style vetting model.",
+    recommendedFor: "Node.js,Full Stack,Remote,India,International",
+    recommendedFrequency: FREQ.HIGH,
+    priority: "High",
+    priorityReason: "Strong fit for India-based remote tech talent — vetted matching with genuine global-company demand, same mold as Turing/Toptal.",
+  },
+  {
     name: "Toptal",
     slug: "toptal",
     officialUrl: "https://www.toptal.com",
