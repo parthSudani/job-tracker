@@ -146,7 +146,13 @@ async function readBlobRaw(): Promise<{ data: StoreData; etag: string } | null> 
   const result = await get(BLOB_PATHNAME, { access: "private", useCache: false, token });
   if (!result) return null;
   const text = await new Response(result.stream).text();
-  return { data: JSON.parse(text) as StoreData, etag: result.blob.etag };
+  // The CDN in front of Blob storage serves this file with a weak (W/-prefixed)
+  // ETag once it's past a small size, but `put`'s `ifMatch` only does strong
+  // comparison — a weak tag can never match, so every conditional write would
+  // fail unconditionally regardless of real conflicts. Strip the prefix so
+  // `ifMatch` is comparing the same validator `put` itself returns.
+  const etag = result.blob.etag.replace(/^W\//, "");
+  return { data: JSON.parse(text) as StoreData, etag };
 }
 
 async function writeBlobRaw(data: StoreData, ifMatch?: string): Promise<void> {
