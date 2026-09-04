@@ -407,6 +407,18 @@ export const SEED_PLATFORMS: SeedPlatform[] = [
     priorityReason: "High volume of dev contract work, tempered by race-to-the-bottom noise at the low-budget end.",
   },
   {
+    name: "Handshake AI Fellowship",
+    slug: "handshake-ai",
+    officialUrl: "https://ai.joinhandshake.com/fellow/projects",
+    category: CATEGORY.FREELANCE,
+    description: "Paid, remote, part-time project work training and evaluating AI models for partner AI labs.",
+    whyUseIt: "Flexible, well-paid (up to ~$100/hr) gig work — but Handshake requires U.S.-based work authorization it can support.",
+    recommendedFor: "Freelance,Remote,AI training",
+    recommendedFrequency: FREQ.ASNEEDED,
+    priority: "Low",
+    priorityReason: "Strong pay rate, but the U.S. work-authorization requirement blocks eligibility without it — not a realistic regular channel otherwise.",
+  },
+  {
     name: "WhatJobs",
     slug: "whatjobs",
     officialUrl: "https://www.whatjobs.com",
