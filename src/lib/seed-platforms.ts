@@ -395,6 +395,18 @@ export const SEED_PLATFORMS: SeedPlatform[] = [
     priorityReason: "Small but well-curated niche; worth checking regularly if a 4-day week matters to you.",
   },
   {
+    name: "Twine",
+    slug: "twine",
+    officialUrl: "https://www.twine.net/parthtala",
+    category: CATEGORY.FREELANCE,
+    description: "Freelance marketplace connecting developers, designers, and creatives with client projects across 150+ categories.",
+    whyUseIt: "Project-first matching with explicit Node.js/full-stack coverage and a milestone-based Vault payment system for secured payouts.",
+    recommendedFor: "Node.js,Full Stack,Freelance,Remote,International",
+    recommendedFrequency: FREQ.MEDIUM,
+    priority: "Medium",
+    priorityReason: "Legitimate freelance channel with real Node.js/dev demand and secured payments — solid secondary source, smaller volume than Upwork.",
+  },
+  {
     name: "Upwork",
     slug: "upwork",
     officialUrl: "https://www.upwork.com",
