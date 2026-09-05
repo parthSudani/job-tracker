@@ -275,6 +275,18 @@ export const SEED_PLATFORMS: SeedPlatform[] = [
     priorityReason: "Curated EU/UK/US startup roles are genuinely useful if targeting international relocation, despite limited India-specific relevance and mid-transition branding.",
   },
   {
+    name: "Haystack",
+    slug: "haystack",
+    officialUrl: "https://haystack.cv",
+    category: CATEGORY.STARTUP,
+    description: "Developer-first job matching platform — set your stack, seniority, and preferences, and vetted employers reach out to you.",
+    whyUseIt: "Recruiter-agency-free with curated employer access, positioning itself against generic boards; reduces noise the same way Wellfound/Instahyre do, with a broader global reach.",
+    recommendedFor: "Node.js,Full Stack,Remote,International",
+    recommendedFrequency: FREQ.HIGH,
+    priority: "High",
+    priorityReason: "Genuine match-based, recruiter-free model cuts noise the way Wellfound/Instahyre do, but lacks documented India-specific traction or AI-specific focus to justify Critical.",
+  },
+  {
     name: "Turing",
     slug: "turing",
     officialUrl: "https://www.turing.com/jobs",
