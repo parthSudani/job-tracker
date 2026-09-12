@@ -63,7 +63,7 @@ export const DATE_RANGE_PRESETS = [
 ] as const;
 export type DateRangePreset = (typeof DATE_RANGE_PRESETS)[number]["value"];
 
-export const MAX_DAILY_APPLICATIONS = 500;
+export const MAX_DAILY_APPLICATIONS = 5000;
 
 export const NAV_ITEMS = [
   { href: "/dashboard", label: "Dashboard", icon: "LayoutDashboard" },

@@ -251,6 +251,18 @@ export const SEED_PLATFORMS: SeedPlatform[] = [
     priorityReason: "Lower signal-to-noise ratio with a spam-prone reputation; keep as a light supplement only.",
   },
   {
+    name: "TimesJobs",
+    slug: "timesjobs",
+    officialUrl: "https://www.timesjobs.com/myHome",
+    category: CATEGORY.GENERAL,
+    description: "Long-running India general job portal from the Times Group, covering all industries and experience levels.",
+    whyUseIt: "Additional India listing coverage, though volume and recruiter engagement have faded well behind Naukri in recent years.",
+    recommendedFor: "India,All roles",
+    recommendedFrequency: FREQ.LOW,
+    priority: "Low",
+    priorityReason: "Same tier as Shine — a declining, spam-prone legacy India portal now overshadowed by Naukri; keep as a light supplement only.",
+  },
+  {
     name: "Y Combinator",
     slug: "y-combinator",
     officialUrl: "https://www.workatastartup.com",
