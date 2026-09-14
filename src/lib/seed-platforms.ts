@@ -335,6 +335,18 @@ export const SEED_PLATFORMS: SeedPlatform[] = [
     priorityReason: "Elite vetting and pay are real, but this is a freelance/contract network — not your stated primary target of a full-time backend/full-stack role — so it's a secondary source rather than a top-tier one.",
   },
   {
+    name: "Flexiple",
+    slug: "flexiple",
+    officialUrl: "https://flexiple.com/",
+    category: CATEGORY.FREELANCE,
+    description: "India-founded vetted network placing top-1% developers into contract roles with mostly US clients.",
+    whyUseIt: "Same vetted-marketplace model as Toptal but built around Indian talent, with steady Node.js/full-stack contract demand and transparent hourly rates.",
+    recommendedFor: "Node.js,Full Stack,Freelance,Remote,India,International",
+    recommendedFrequency: FREQ.MEDIUM,
+    priority: "Medium",
+    priorityReason: "Good India-to-US remote pipeline and lighter vetting overhead than Toptal, but it is contract/hourly-first rather than full-time placement — useful as a parallel track, not a replacement for your primary full-time search.",
+  },
+  {
     name: "HackerEarth",
     slug: "hackerearth",
     officialUrl: "https://www.hackerearth.com/recruit/",
