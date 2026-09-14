@@ -263,6 +263,18 @@ export const SEED_PLATFORMS: SeedPlatform[] = [
     priorityReason: "Same tier as Shine — a declining, spam-prone legacy India portal now overshadowed by Naukri; keep as a light supplement only.",
   },
   {
+    name: "Unstop",
+    slug: "unstop",
+    officialUrl: "https://unstop.com/jobs",
+    category: CATEGORY.GENERAL,
+    description: "India platform built around competitions, hackathons and campus hiring, with a jobs and internships board attached.",
+    whyUseIt: "Occasional India tech openings and hackathon-led hiring routes that never reach the mainstream boards.",
+    recommendedFor: "India,Early career,All roles",
+    recommendedFrequency: FREQ.LOW,
+    priority: "Low",
+    priorityReason: "Centre of gravity is campus/fresher hiring and competitions, with little experienced-hire or international remote volume — the two axes your search actually depends on. Worth an occasional skim, not a routine.",
+  },
+  {
     name: "Y Combinator",
     slug: "y-combinator",
     officialUrl: "https://www.workatastartup.com",
