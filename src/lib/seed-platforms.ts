@@ -1,4 +1,4 @@
-// Static seed data for the 31 job platforms. Pure data, no I/O — consumed by
+// Static seed data for the seeded job platforms. Pure data, no I/O — consumed by
 // lib/store.ts to initialize a brand-new store on first access.
 
 const CATEGORY = {
@@ -119,6 +119,18 @@ export const SEED_PLATFORMS: SeedPlatform[] = [
     priorityReason: "Strong direct-company source at a top-tier AI-relevant employer — capped at High rather than Critical since it only covers one company.",
   },
   {
+    name: "Siemens Careers",
+    slug: "siemens-careers",
+    officialUrl: "https://jobs.siemens.com/",
+    category: CATEGORY.PRIMARY,
+    description: "Siemens's own global careers marketplace, covering its industrial, mobility, healthcare and digital-software divisions.",
+    whyUseIt: "Its India engineering centres actively post React/Node.js full-stack roles across Bangalore, Pune and Gurugram, including web work fronting internal AI models — direct applications with no aggregator in between.",
+    recommendedFor: "Node.js,Full Stack,India,Direct applications",
+    recommendedFrequency: FREQ.ASNEEDED,
+    priority: "Medium",
+    priorityReason: "The India openings are a genuine stack match (React/Node.js/Azure in your cities), which earns it a place — but it is one industrial conglomerate whose India work is GCC/enterprise rather than the startup/product/SaaS/AI profile this list is tuned to, and its hiring cycles run long. Held below Google Careers, which at least sits at the centre of the AI work you are targeting.",
+  },
+  {
     name: "Naukri",
     slug: "naukri",
     officialUrl: "https://www.naukri.com",
@@ -227,6 +239,18 @@ export const SEED_PLATFORMS: SeedPlatform[] = [
     priorityReason: "Real tech specialization is worth some credit, but it's heavily U.S.-centric with a staffing/contract skew — without stated U.S. work authorization, most listings aren't realistically reachable.",
   },
   {
+    name: "iitjobs",
+    slug: "iitjobs",
+    officialUrl: "https://www.iitjobs.com/jobs",
+    category: CATEGORY.GENERAL,
+    description: "Free global IT-only job portal (San Jose, founded 2006) listing 160k+ tech roles worldwide — the name stands for international IT, not the IITs.",
+    whyUseIt: "Tech-only filtering across a genuinely international listing pool, free with no premium tier or pay-to-apply gate, and it does carry India postings alongside its US bulk.",
+    recommendedFor: "Node.js,Full Stack,International,Remote,India",
+    recommendedFrequency: FREQ.MEDIUM,
+    priority: "Medium",
+    priorityReason: "IT-only scope makes it more useful per-search than the legacy general portals, but it is a modest-traffic aggregator whose centre of gravity is US staffing — where work authorisation gates most of the volume — and its listings overlap heavily with Dice and Indeed. Worth a weekly sweep; drop it to Low if the first few passes are mostly duplicates.",
+  },
+  {
     name: "Foundit",
     slug: "foundit",
     officialUrl: "https://www.foundit.in",
@@ -273,6 +297,30 @@ export const SEED_PLATFORMS: SeedPlatform[] = [
     recommendedFrequency: FREQ.LOW,
     priority: "Low",
     priorityReason: "Centre of gravity is campus/fresher hiring and competitions, with little experienced-hire or international remote volume — the two axes your search actually depends on. Worth an occasional skim, not a routine.",
+  },
+  {
+    name: "Totaljobs",
+    slug: "totaljobs",
+    officialUrl: "https://www.totaljobs.com",
+    category: CATEGORY.GENERAL,
+    description: "One of the UK's largest general job boards, part of The Stepstone Group, with a substantial technology vertical.",
+    whyUseIt: "Real UK tech volume across every skillset, plus published salary benchmarking that is useful for calibrating expectations against the UK market.",
+    recommendedFor: "All roles,International,Full Stack",
+    recommendedFrequency: FREQ.LOW,
+    priority: "Low",
+    priorityReason: "Genuine UK tech volume, but it is a mass-market domestic board — nearly every listing is a UK-local hire with no sponsorship route from India, so the hit rate is poor from where you are searching. Otta sits higher because its curated startup roles are far likelier to be remote or sponsorship-open. Raise this to Medium or High the moment UK relocation becomes an active track rather than a maybe.",
+  },
+  {
+    name: "JobBeeper",
+    slug: "jobbeeper",
+    officialUrl: "https://www.jobbeeper.com",
+    category: CATEGORY.GENERAL,
+    description: "Real-time job alert service built around applying early — it watches postings and notifies you as they appear, on paid alert plans.",
+    whyUseIt: "Being among the first applicants measurably improves callback odds on high-volume postings, and an alert layer catches roles between your own manual sweeps.",
+    recommendedFor: "All roles,Job alerts",
+    recommendedFrequency: FREQ.ASNEEDED,
+    priority: "Low",
+    priorityReason: "Speed-to-apply is a real edge, but this is an alerting layer over sources already in this list rather than a new supply of roles, and it charges for what LinkedIn and Naukri alerts already do free. Its coverage and pricing are also undocumented outside a JS-only marketing site, so treat it as unverified. Configure once if you want it; it does not earn a recurring slot.",
   },
   {
     name: "Y Combinator",
@@ -393,6 +441,18 @@ export const SEED_PLATFORMS: SeedPlatform[] = [
     recommendedFrequency: FREQ.HIGH,
     priority: "High",
     priorityReason: "Recruiter curation across hundreds of hiring partners keeps role quality consistently high.",
+  },
+  {
+    name: "HuntingCube",
+    slug: "huntingcube",
+    officialUrl: "https://huntingcube.ai/job-seekers",
+    category: CATEGORY.STARTUP,
+    description: "India tech recruiting agency (founded 2015) pairing its CubicAI matching engine with recruiter-led screening; free for candidates, with clients across India, Dubai, Singapore and the UK.",
+    whyUseIt: "Registering once puts your profile in front of recruiters working live mandates at product companies, funded startups and GCCs — an inbound channel that runs in parallel to your own searching, and the candidate dashboard still lets you apply directly.",
+    recommendedFor: "Node.js,Full Stack,India,Startups,Product companies,Recruiter outreach",
+    recommendedFrequency: FREQ.MEDIUM,
+    priority: "Medium",
+    priorityReason: "A real agency pipeline into India product/startup/GCC hiring, which puts it clearly above the legacy India portals — but it is recruiter-mediated rather than browse-and-apply, its specialist weight sits on HFT/quant/AI-ML/semiconductor and GCC-leadership mandates rather than mainstream Node.js/full-stack work, and one agency roster cannot carry search volume. Set up the profile properly, then treat it as a weekly check.",
   },
   {
     name: "Himalayas",
@@ -573,6 +633,18 @@ export const SEED_PLATFORMS: SeedPlatform[] = [
     recommendedFrequency: FREQ.ASNEEDED,
     priority: "Low",
     priorityReason: "Strong pay rate, but the U.S. work-authorization requirement blocks eligibility without it — not a realistic regular channel otherwise.",
+  },
+  {
+    name: "Alignerr",
+    slug: "alignerr",
+    officialUrl: "https://www.alignerr.com",
+    category: CATEGORY.FREELANCE,
+    description: "Labelbox-run expert network paying domain specialists to evaluate and improve frontier AI models, with work done inside Labelbox's own tooling.",
+    whyUseIt: "Software engineering is one of its top-paid verified domains (roughly $60-120/hr), India is an eligible country, and it pays weekly — a rare AI-training platform that is actually open to you.",
+    recommendedFor: "Freelance,Remote,AI training,India",
+    recommendedFrequency: FREQ.ASNEEDED,
+    priority: "Medium",
+    priorityReason: "Sits well above Handshake AI precisely because India is an eligible country, so the pay rates are real rather than theoretical. Capped at Medium because it is gig work rather than the full-time engineering role you are actually searching for, project availability is inconsistent, and some projects pay only for work a reviewer approves — unreviewed hours go unpaid. A parallel income track, not a search channel.",
   },
   {
     name: "WhatJobs",
