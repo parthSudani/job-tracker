@@ -17,6 +17,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { addCompanyAction } from "@/actions/platforms";
+import { PRIORITIES } from "@/lib/constants";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export function AddCompanyDialog() {
   const router = useRouter();
@@ -24,6 +26,7 @@ export function AddCompanyDialog() {
   const [name, setName] = React.useState("");
   const [url, setUrl] = React.useState("");
   const [notes, setNotes] = React.useState("");
+  const [priority, setPriority] = React.useState<string>("Medium");
   const [error, setError] = React.useState<string | null>(null);
   const [pending, startTransition] = React.useTransition();
 
@@ -31,13 +34,14 @@ export function AddCompanyDialog() {
     setName("");
     setUrl("");
     setNotes("");
+    setPriority("Medium");
     setError(null);
   }
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     startTransition(async () => {
-      const res = await addCompanyAction({ name, officialUrl: url, notes });
+      const res = await addCompanyAction({ name, officialUrl: url, notes, priority });
       if (res.ok) {
         toast.success(`Added ${name} to your platforms.`);
         setOpen(false);
@@ -88,6 +92,15 @@ export function AddCompanyDialog() {
               onChange={(e) => setUrl(e.target.value)}
               placeholder="https://stripe.com/jobs"
             />
+          </div>
+          <div className="space-y-1.5">
+            <Label>Priority</Label>
+            <Select value={priority} onValueChange={setPriority}>
+              <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {PRIORITIES.map((p) => <SelectItem key={p} value={p}>{p}</SelectItem>)}
+              </SelectContent>
+            </Select>
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="company-notes">Notes (optional)</Label>

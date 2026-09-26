@@ -26,7 +26,7 @@ export async function getPlatformById(id: string): Promise<PlatformRow | null> {
 /** Pure in-place mutation, reused by both createCompanyPlatform and the bulk import route. */
 export function createCompanyPlatformInPlace(
   data: StoreData,
-  input: { name: string; officialUrl?: string | null; notes?: string | null }
+  input: { name: string; officialUrl?: string | null; notes?: string | null; priority?: string }
 ): PlatformRow {
   const base = slugify(input.name) || "company";
   let slug = base;
@@ -45,7 +45,7 @@ export function createCompanyPlatformInPlace(
     whyUseIt: null,
     recommendedFor: null,
     recommendedFrequency: "As needed",
-    priority: "Medium",
+    priority: input.priority ?? "Medium",
     priorityReason: null,
     notes: input.notes || null,
     active: true,
@@ -62,6 +62,7 @@ export async function createCompanyPlatform(input: {
   name: string;
   officialUrl?: string | null;
   notes?: string | null;
+  priority?: string;
 }) {
   return writeStore((data) => createCompanyPlatformInPlace(data, input));
 }

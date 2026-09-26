@@ -71,6 +71,18 @@ export const SEED_PLATFORMS: SeedPlatform[] = [
     priorityReason: "Per your own target of startups/product/SaaS/AI companies, direct applications bypass aggregator noise entirely and are the highest-signal channel for an experienced hire — genuinely critical, not just supplementary.",
   },
   {
+    name: "KIAQ",
+    slug: "kiaq",
+    officialUrl: "https://career.kiaq.in/",
+    category: "Primary",
+    description: "KIAQ's company career site for direct applications.",
+    whyUseIt: "Track relevant openings and apply directly through the company's careers portal.",
+    recommendedFor: "Direct applications,Company roles",
+    recommendedFrequency: FREQ.ASNEEDED,
+    priority: "Medium",
+    priorityReason: "A single-company source; keep at Medium until its roles are confirmed as a strong fit for your target stack and location.",
+  },
+  {
     name: "Greenhouse",
     slug: "greenhouse",
     officialUrl: "https://www.greenhouse.com",
