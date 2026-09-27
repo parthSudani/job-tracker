@@ -275,6 +275,18 @@ export const SEED_PLATFORMS: SeedPlatform[] = [
     priorityReason: "Good India/APAC coverage justifies more regular attention, despite a legacy reputation for stale listings inherited from Monster.",
   },
   {
+    name: "Pulse Job",
+    slug: "pulse-job",
+    officialUrl: "https://www.pulsjob.com/jobs?search=Full%20Stack%20Developer",
+    category: CATEGORY.GENERAL,
+    description: "Broad job discovery platform with software development roles and AI-assisted search tools.",
+    whyUseIt: "Search for full-stack openings across companies and use its job filters to narrow results.",
+    recommendedFor: "Full Stack,Software Development,India,Remote",
+    recommendedFrequency: FREQ.MEDIUM,
+    priority: "Medium",
+    priorityReason: "Its software-development listings and search filters make it a useful supplementary source; review each employer and listing carefully because the platform says it does not verify all employer claims.",
+  },
+  {
     name: "Shine.com",
     slug: "shine",
     officialUrl: "https://www.shine.com",
