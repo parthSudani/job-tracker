@@ -130,6 +130,37 @@ function createSeedData(): StoreData {
   return { platforms, records: [], dayNotes: [], settings: defaultSettings() };
 }
 
+function addMissingSeedPlatforms(data: StoreData): boolean {
+  const existingSlugs = new Set(data.platforms.map((platform) => platform.slug));
+  const missing = SEED_PLATFORMS.filter((platform) => !existingSlugs.has(platform.slug));
+  if (missing.length === 0) return false;
+
+  const ts = nowIso();
+  for (const platform of missing) {
+    data.platforms.push({
+      id: newId(),
+      name: platform.name,
+      slug: platform.slug,
+      officialUrl: platform.officialUrl,
+      category: platform.category,
+      description: platform.description,
+      whyUseIt: platform.whyUseIt,
+      recommendedFor: platform.recommendedFor,
+      recommendedFrequency: platform.recommendedFrequency,
+      priority: platform.priority,
+      priorityReason: platform.priorityReason,
+      active: true,
+      isCustom: false,
+      sortOrder: data.platforms.length,
+      notes: null,
+      createdAt: ts,
+      updatedAt: ts,
+    });
+    existingSlugs.add(platform.slug);
+  }
+  return true;
+}
+
 function requireToken(): string {
   const token = process.env.BLOB_READ_WRITE_TOKEN;
   if (!token) {
@@ -169,7 +200,16 @@ async function writeBlobRaw(data: StoreData, ifMatch?: string): Promise<void> {
 
 async function loadOrSeed(): Promise<StoreData> {
   const existing = await readBlobRaw();
-  if (existing) return existing.data;
+  if (existing) {
+    if (!addMissingSeedPlatforms(existing.data)) return existing.data;
+    try {
+      await writeBlobRaw(existing.data, existing.etag);
+      return existing.data;
+    } catch (err) {
+      if (err instanceof BlobPreconditionFailedError) return loadOrSeed();
+      throw err;
+    }
+  }
   const seeded = createSeedData();
   await writeBlobRaw(seeded);
   return seeded;
@@ -215,6 +255,7 @@ export async function writeStore<T>(mutator: (data: StoreData) => T): Promise<T>
     attempt++;
     const existing = await readBlobRaw();
     const data = existing ? existing.data : createSeedData();
+    addMissingSeedPlatforms(data);
     const result = mutator(data);
     const pastDeadline = Date.now() >= deadline;
     try {
