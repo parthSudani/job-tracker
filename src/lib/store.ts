@@ -131,13 +131,22 @@ function createSeedData(): StoreData {
 }
 
 function addMissingSeedPlatforms(data: StoreData): boolean {
-  const existingSlugs = new Set(data.platforms.map((platform) => platform.slug));
-  const missing = SEED_PLATFORMS.filter((platform) => !existingSlugs.has(platform.slug));
-  if (missing.length === 0) return false;
-
+  const bySlug = new Map(data.platforms.map((platform) => [platform.slug, platform]));
+  let changed = false;
   const ts = nowIso();
-  for (const platform of missing) {
-    data.platforms.push({
+  for (const platform of SEED_PLATFORMS) {
+    const existing = bySlug.get(platform.slug);
+    if (existing) {
+      if (existing.priority !== platform.priority || existing.priorityReason !== platform.priorityReason) {
+        existing.priority = platform.priority;
+        existing.priorityReason = platform.priorityReason;
+        existing.updatedAt = ts;
+        changed = true;
+      }
+      continue;
+    }
+
+    const added: PlatformRow = {
       id: newId(),
       name: platform.name,
       slug: platform.slug,
@@ -155,10 +164,12 @@ function addMissingSeedPlatforms(data: StoreData): boolean {
       notes: null,
       createdAt: ts,
       updatedAt: ts,
-    });
-    existingSlugs.add(platform.slug);
+    };
+    data.platforms.push(added);
+    bySlug.set(platform.slug, added);
+    changed = true;
   }
-  return true;
+  return changed;
 }
 
 function requireToken(): string {
