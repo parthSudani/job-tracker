@@ -717,7 +717,7 @@ export const SEED_PLATFORMS: SeedPlatform[] = [
     priorityReason: "High-value weekly channel in your personalized senior engineering search plan.",
   },
   {
-    name: "Teksands", slug: "teksands", officialUrl: "https://teksands.com", category: CATEGORY.PRIMARY,
+    name: "Teksands", slug: "teksands", officialUrl: "https://teksands.hire4x.com/", category: CATEGORY.PRIMARY,
     description: "Technology talent and recruitment network with India-focused opportunities.",
     whyUseIt: "A targeted recruiter channel for software engineering and technology positions.",
     recommendedFor: "Node.js,Backend,India,Recruiters", recommendedFrequency: FREQ.HIGH,
