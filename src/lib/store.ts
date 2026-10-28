@@ -137,9 +137,19 @@ function addMissingSeedPlatforms(data: StoreData): boolean {
   for (const platform of SEED_PLATFORMS) {
     const existing = bySlug.get(platform.slug);
     if (existing) {
-      if (existing.priority !== platform.priority || existing.priorityReason !== platform.priorityReason) {
+      const updateHuntingCubeUrl =
+        existing.slug === "huntingcube" &&
+        existing.officialUrl === "https://huntingcube.ai/job-seekers";
+      const updateDiceUrl = existing.slug === "dice" && existing.officialUrl === "https://www.dice.com";
+      if (
+        existing.priority !== platform.priority ||
+        existing.priorityReason !== platform.priorityReason ||
+        updateHuntingCubeUrl ||
+        updateDiceUrl
+      ) {
         existing.priority = platform.priority;
         existing.priorityReason = platform.priorityReason;
+        if (updateHuntingCubeUrl || updateDiceUrl) existing.officialUrl = platform.officialUrl;
         existing.updatedAt = ts;
         changed = true;
       }
